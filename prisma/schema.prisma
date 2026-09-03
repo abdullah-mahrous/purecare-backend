@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model WebsiteGeneralData {
+  id              String   @id @default("singleton")
+  whatsappNumber  String?
+  phoneNumber     String?
+  emergencyNumber String?
+  facebookUrl     String?
+  instagramUrl    String?
+  tiktokUrl       String?
+  introVideoUrl   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("website_general_data")
+}
+
+model Service {
+  id             String               @id @default(cuid())
+  nameAr         String
+  nameEn         String
+  descriptionAr  String
+  descriptionEn  String
+  imgUrl         String
+  rate           Decimal              @db.Decimal(10, 2)
+  customersCount Int                  @default(0)
+  responseTime   String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  faqs           Faq[]
+  included       IncludedService[]
+  targeted       TargetedCustomer[]
+  reservations   ReservationService[]
+
+  @@map("services")
+}
+
+model Faq {
+  id         String   @id @default(cuid())
+  questionAr String
+  questionEn String
+  answerAr   String
+  answerEn   String
+  serviceId  String?
+  service    Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([serviceId])
+  @@map("faqs")
+}
+
+model IncludedService {
+  id            String   @id @default(cuid())
+  titleAr       String
+  titleEn       String
+  descriptionAr String
+  descriptionEn String
+  iconUrl       String
+  serviceId     String
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([serviceId])
+  @@map("included_services")
+}
+
+model TargetedCustomer {
+  id            String   @id @default(cuid())
+  titleAr       String
+  titleEn       String
+  descriptionAr String
+  descriptionEn String
+  iconUrl       String
+  serviceId     String
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([serviceId])
+  @@map("targeted_customers")
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  nameAr    String
+  nameEn    String
+  gender    String
+  commentAr String
+  commentEn String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("testimonials")
+}
+
+model Reservation {
+  id          String               @id @default(cuid())
+  fullName    String
+  phoneNumber String
+  age         Int?
+  desiredDate DateTime
+  address     String
+  healthIssue String?
+  notes       String?
+  createdAt   DateTime             @default(now())
+  services    ReservationService[]
+
+  @@index([desiredDate])
+  @@map("reservations")
+}
+
+model ReservationService {
+  reservationId String
+  serviceId     String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  service       Service     @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@id([reservationId, serviceId])
+  @@index([serviceId])
+  @@map("reservation_services")
+}
+
+model Career {
+  id                         String   @id @default(cuid())
+  fullName                   String
+  phoneNumber                String
+  age                        Int?
+  yoe                        Int?
+  address                    String
+  position                   String
+  nationalIdUrl              String
+  graduationCertificateUrl   String?
+  professionalLicenseCardUrl String?
+  workPlaces                 String?
+  createdAt                  DateTime @default(now())
+
+  @@index([position])
+  @@map("careers")
+}
+
+model Equipment {
+  id            String   @id @default(cuid())
+  nameAr        String
+  nameEn        String
+  descriptionAr String
+  descriptionEn String
+  categoryAr    String
+  categoryEn    String
+  price         Decimal  @db.Decimal(10, 2)
+  imgUrl        String
+  available     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([nameAr])
+  @@index([nameEn])
+  @@index([categoryAr])
+  @@index([categoryEn])
+  @@index([price])
+  @@map("equipments")
+}

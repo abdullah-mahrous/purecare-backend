@@ -1,0 +1,22 @@
+import { Router } from "express";
+import validation from "../../middlewares/validation";
+import { idSchema, serviceChildParamsSchema, serviceParentParamsSchema, servicePatchSchema, serviceWriteSchema, includedServiceCreateSchema, includedServicePatchSchema, targetedCustomerCreateSchema, targetedCustomerPatchSchema } from "./services.validation";
+import { adminOnly } from "../../utilities/adminRoute";
+import { memoryUpload } from "../../utilities/upload";
+import { listServices, getService, createService, updateService, deleteService } from "./services.controller";
+import { createIncludedService, updateIncludedService, deleteIncludedService, createTargetedCustomer, updateTargetedCustomer, deleteTargetedCustomer } from "./serviceChildren.controller";
+
+const router = Router();
+const serviceUpload = memoryUpload();
+router.get("/", listServices);
+router.get("/:id", validation(idSchema, "params"), getService);
+router.post("/", ...adminOnly, serviceUpload.single("serviceImg"), validation(serviceWriteSchema), createService);
+router.patch("/:id", ...adminOnly, serviceUpload.single("serviceImg"), validation(idSchema, "params"), validation(servicePatchSchema), updateService);
+router.delete("/:id", ...adminOnly, validation(idSchema, "params"), deleteService);
+router.post("/:serviceId/included-services", ...adminOnly, serviceUpload.single("icon"), validation(serviceParentParamsSchema, "params"), validation(includedServiceCreateSchema), createIncludedService);
+router.patch("/:serviceId/included-services/:id", ...adminOnly, serviceUpload.single("icon"), validation(serviceChildParamsSchema, "params"), validation(includedServicePatchSchema), updateIncludedService);
+router.delete("/:serviceId/included-services/:id", ...adminOnly, validation(serviceChildParamsSchema, "params"), deleteIncludedService);
+router.post("/:serviceId/targeted-customers", ...adminOnly, serviceUpload.single("icon"), validation(serviceParentParamsSchema, "params"), validation(targetedCustomerCreateSchema), createTargetedCustomer);
+router.patch("/:serviceId/targeted-customers/:id", ...adminOnly, serviceUpload.single("icon"), validation(serviceChildParamsSchema, "params"), validation(targetedCustomerPatchSchema), updateTargetedCustomer);
+router.delete("/:serviceId/targeted-customers/:id", ...adminOnly, validation(serviceChildParamsSchema, "params"), deleteTargetedCustomer);
+export default router;
