@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import type { Prisma, Service } from "@prisma/client";
 import { prisma } from "../../config/database";
 import enVars from "../../config/environment";
 import { sendTelegramMessage } from "../../services/telegramService";
@@ -18,14 +19,14 @@ export const createReservation = async (req: Request, res: Response, next: NextF
                 select: { id: true },
             });
 
-            const existingServiceIds = new Set(services.map((service) => service.id));
+            const existingServiceIds = new Set(services.map((service: Pick<Service, "id">) => service.id));
             const invalidServiceIds = requestedServiceIds.filter((serviceId) => !existingServiceIds.has(serviceId));
 
             if (invalidServiceIds.length > 0)
                 return next(new appError(`The following service IDs do not exist: ${invalidServiceIds.join(", ")}`, 400));
         }
 
-        const reservation = await prisma.$transaction(async (transaction) => {
+        const reservation = await prisma.$transaction(async (transaction: Prisma.TransactionClient) => {
             const created = await transaction.reservation.create({ data: reservationData as never });
 
             await transaction.reservationService.createMany({ data: requestedServiceIds.map((serviceId) => ({ reservationId: created.id, serviceId })) });
@@ -33,7 +34,7 @@ export const createReservation = async (req: Request, res: Response, next: NextF
             return transaction.reservation.findUniqueOrThrow({ where: { id: created.id }, include: { services: { include: { service: true } } } });
         });
 
-        notify(["New PureCare reservation", `Name: ${reservation.fullName}`, `Phone: ${reservation.phoneNumber}`, `Age: ${reservation.age}`, `Date: ${reservation.desiredDate.toISOString()}`, `Address: ${reservation.address}`, `Services: ${reservation.services.map(({ service }) => `${service.nameEn} (${service.nameAr})`).join(", ")}`, `Health issue: ${reservation.healthIssue ?? "-"}`, `Notes: ${reservation.notes ?? "-"}`].join("\n"));
+        notify(["New PureCare reservation", `Name: ${reservation.fullName}`, `Phone: ${reservation.phoneNumber}`, `Age: ${reservation.age}`, `Date: ${reservation.desiredDate.toISOString()}`, `Address: ${reservation.address}`, `Services: ${reservation.services.map(({ service }: { service: Service }) => `${service.nameEn} (${service.nameAr})`).join(", ")}`, `Health issue: ${reservation.healthIssue ?? "-"}`, `Notes: ${reservation.notes ?? "-"}`].join("\n"));
 
         return sendSuccess(res, reservation, 201);
     } catch (error) { 

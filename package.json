@@ -13,6 +13,7 @@
   "main": "server.ts",
   "scripts": {
     "build": "prisma generate && tsc",
+    "postinstall": "prisma generate",
     "test": "vitest run --passWithNoTests",
     "dev": "tsx watch server.ts",
     "start": "tsx server.ts",

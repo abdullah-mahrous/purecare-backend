@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../config/database";
 import { deleteMedia, publicIdFromUrl, uploadImage } from "../../services/cloudinaryService";
 import { appError } from "../../utilities/appError";
@@ -23,7 +24,7 @@ export const createService = async (req: Request, res: Response, next: NextFunct
   try {
     if (!req.file) return next(new appError("A service image is required", 400));
     const uploaded = await uploadImage(req.file.buffer, "purecare/services");
-    const created = await prisma.$transaction((transaction) => transaction.service.create({
+    const created = await prisma.$transaction((transaction: Prisma.TransactionClient) => transaction.service.create({
       data: { ...req.body, imgUrl: uploaded.secure_url },
       include,
     }));
@@ -45,7 +46,9 @@ export const updateService = async (req: Request, res: Response, next: NextFunct
 export const deleteService = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const service = await prisma.service.delete({ where: { id: getId(req) }, include: { included: true, targeted: true } });
-    await deleteCloudinaryMedia([service.imgUrl, ...service.included.map(({ iconUrl }) => iconUrl), ...service.targeted.map(({ iconUrl }) => iconUrl)], "Service media cleanup failed");
+
+    await deleteCloudinaryMedia([service.imgUrl, ...service.included.map(({ iconUrl }: { iconUrl: string }) => iconUrl), ...service.targeted.map(({ iconUrl }: { iconUrl: string }) => iconUrl)], "Service media cleanup failed");
+
     return res.status(204).send();
   } catch (error) { return next(error); }
 };
