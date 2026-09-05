@@ -57,6 +57,24 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
+app.get("/test-telegram", async (_req, res) => {
+  try {
+    const { botToken } = enVars.telegram;
+
+    if (!botToken) {
+      return res.status(500).json({ success: false, error: "TELEGRAM_BOT_TOKEN is not configured" });
+    }
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+    const data = await response.json();
+
+    return res.status(response.ok ? 200 : 500).json({ success: response.ok, status: response.status, data });
+  } catch (error) {
+    console.error("Telegram health check failed", error);
+    return res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
 // 404 handler
 app.use((_req, res) => {
   res.status(404).json({
