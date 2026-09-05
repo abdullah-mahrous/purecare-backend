@@ -46,19 +46,19 @@ describe("feature request schemas", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts nullable reservation values and services", () => {
+  it("accepts nullable or empty reservation values and services", () => {
     const result = reservationSchema.safeParse({
       fullName: "Patient", phoneNumber: "+201000000000", age: null,
       desiredDate: "2026-09-15T10:00:00.000Z", address: "Address",
-      healthIssue: null, notes: null, serviceIds: null,
+      healthIssue: "", notes: "   ", serviceIds: null,
     });
     expect(result.success).toBe(true);
   });
 
-  it("rejects non-positive reservation ages", () => {
+  it("accepts age zero and rejects negative reservation ages", () => {
     const zero = reservationSchema.safeParse({ fullName: "Patient", phoneNumber: "+201000000000", age: 0, desiredDate: "2026-09-15T10:00:00.000Z", address: "Address" });
     const negative = reservationSchema.safeParse({ fullName: "Patient", phoneNumber: "+201000000000", age: -1, desiredDate: "2026-09-15T10:00:00.000Z", address: "Address" });
-    expect(zero.success).toBe(false);
+    expect(zero.success).toBe(true);
     expect(negative.success).toBe(false);
   });
 
@@ -68,6 +68,30 @@ describe("feature request schemas", () => {
       nationalId: "https://res.cloudinary.com/example/image/upload/national-id.jpg",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("accepts nullable or empty career values", () => {
+    const result = careerSchema.safeParse({
+      fullName: "Applicant", phoneNumber: "+201000000000", age: null, yoe: "", address: "Address", position: "Nurse",
+      nationalId: "https://res.cloudinary.com/example/image/upload/national-id.jpg",
+      workPlaces: "   ",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts age zero and rejects negative career ages", () => {
+    const zero = careerSchema.safeParse({
+      fullName: "Applicant", phoneNumber: "+201000000000", age: 0,
+      address: "Address", position: "Nurse",
+      nationalId: "https://res.cloudinary.com/example/image/upload/national-id.jpg",
+    });
+    const negative = careerSchema.safeParse({
+      fullName: "Applicant", phoneNumber: "+201000000000", age: -1,
+      address: "Address", position: "Nurse",
+      nationalId: "https://res.cloudinary.com/example/image/upload/national-id.jpg",
+    });
+    expect(zero.success).toBe(true);
+    expect(negative.success).toBe(false);
   });
 
   it("accepts scalar career workPlaces", () => {

@@ -12,7 +12,7 @@ export const createReservation = async (req: Request, res: Response, next: NextF
     try {
         const { serviceIds = [], ...reservationData } = req.body as { serviceIds?: string[] | null } & Record<string, unknown>;
         const requestedServiceIds = serviceIds ?? [];
-        
+
         if (requestedServiceIds.length > 0) {
             const services = await prisma.service.findMany({
                 where: { id: { in: requestedServiceIds } },
@@ -30,15 +30,27 @@ export const createReservation = async (req: Request, res: Response, next: NextF
             const created = await transaction.reservation.create({ data: reservationData as never });
 
             await transaction.reservationService.createMany({ data: requestedServiceIds.map((serviceId) => ({ reservationId: created.id, serviceId })) });
-            
+
             return transaction.reservation.findUniqueOrThrow({ where: { id: created.id }, include: { services: { include: { service: true } } } });
         });
 
-        notify(["New PureCare reservation", `Name: ${reservation.fullName}`, `Phone: ${reservation.phoneNumber}`, `Age: ${reservation.age}`, `Date: ${reservation.desiredDate.toISOString()}`, `Address: ${reservation.address}`, `Services: ${reservation.services.map(({ service }: { service: Service }) => `${service.nameEn} (${service.nameAr})`).join(", ")}`, `Health issue: ${reservation.healthIssue ?? "-"}`, `Notes: ${reservation.notes ?? "-"}`].join("\n"));
+        const notificationLines = [
+            "New PureCare reservation",
+            `Name: ${reservation.fullName}`,
+            `Phone: ${reservation.phoneNumber}`,
+            ...(reservation.age !== null && reservation.age !== undefined && reservation.age >= 0 ? [`Age: ${reservation.age}`] : []),
+            `Date: ${reservation.desiredDate.toISOString()}`,
+            `Address: ${reservation.address}`,
+            `Services: ${reservation.services.map(({ service }: { service: Service }) => `${service.nameEn} (${service.nameAr})`).join(", ")}`,
+            ...(reservation.healthIssue && reservation.healthIssue.trim() ? [`Health issue: ${reservation.healthIssue.trim()}`] : []),
+            ...(reservation.notes && reservation.notes.trim() ? [`Notes: ${reservation.notes.trim()}`] : []),
+        ];
+
+        notify(notificationLines.join("\n"));
 
         return sendSuccess(res, reservation, 201);
-    } catch (error) { 
-        return next(error); 
+    } catch (error) {
+        return next(error);
     }
 };
 

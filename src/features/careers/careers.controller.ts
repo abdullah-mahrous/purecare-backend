@@ -18,7 +18,18 @@ export const createCareer = async (req: Request, res: Response, next: NextFuncti
         professionalLicenseCardUrl: professionalLicenseCard,
       },
     });
-    notify(["New PureCare career application", `Name: ${career.fullName}`, `Phone: ${career.phoneNumber}`, `YOE: ${career.yoe}`, `Position: ${career.position}`].join("\n"));
+
+    const notificationLines = [
+      "New PureCare career application",
+      `Name: ${career.fullName}`,
+      `Phone: ${career.phoneNumber}`,
+      ...(career.age !== null && career.age !== undefined && career.age >= 0 ? [`Age: ${career.age}`] : []),
+      ...(career.yoe !== null && career.yoe !== undefined && career.yoe >= 0 ? [`YOE: ${career.yoe}`] : []),
+      `Position: ${career.position}`,
+      ...(career.workPlaces && career.workPlaces.trim() ? [`Work places: ${career.workPlaces.trim()}`] : []),
+    ];
+
+    notify(notificationLines.join("\n"));
     return sendSuccess(res, career, 201);
   } catch (error) { return next(error); }
 };
