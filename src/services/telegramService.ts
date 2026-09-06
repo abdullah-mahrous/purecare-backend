@@ -23,16 +23,12 @@ export const sendTelegramMessage = async (text: string, topicId: number | undefi
         const timeout = setTimeout(() => controller.abort(), 10000);
 
         try {
-            console.log('before fetch');
-
             const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify(payload),
                 signal: controller.signal,
             });
-
-            console.log('after fetch');
 
             clearTimeout(timeout);
 

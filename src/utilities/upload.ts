@@ -1,8 +1,8 @@
 import multer from "multer";
 
-export const memoryUpload = (fileFilter?: multer.Options["fileFilter"]) => multer({
+export const memoryUpload = (fileFilter?: multer.Options["fileFilter"], limits?: multer.Options["limits"]) => multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024, ...limits },
   ...(fileFilter ? { fileFilter } : {}),
 });
 

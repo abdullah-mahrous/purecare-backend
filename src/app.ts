@@ -57,36 +57,6 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-app.get("/test-telegram-message", async (_req, res) => {
-    try {
-        const { botToken, chatId, reservationTopicId } = enVars.telegram;
-
-        const response = await fetch(
-            `https://api.telegram.org/bot${botToken}/sendMessage`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    message_thread_id: reservationTopicId,
-                    text: "Test message from Vercel",
-                }),
-            }
-        );
-
-        const data = await response.json();
-
-        res.status(response.status).json(data);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            error: String(error),
-        });
-    }
-});
-
 // 404 handler
 app.use((_req, res) => {
   res.status(404).json({

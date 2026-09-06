@@ -147,7 +147,7 @@ model Career {
   yoe                        Int?
   address                    String
   position                   String
-  nationalIdUrl              String
+  nationalIdUrl              String[]
   graduationCertificateUrl   String?
   professionalLicenseCardUrl String?
   workPlaces                 String?
