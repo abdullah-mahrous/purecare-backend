@@ -46,6 +46,15 @@ export const createReservation = async (req: Request, res: Response, next: NextF
             ...(reservation.notes && reservation.notes.trim() ? [`Notes: ${reservation.notes.trim()}`] : []),
         ];
 
+        console.log("Telegram request:", {
+            envchatId: enVars.telegram.chatId,
+            topicId: enVars.telegram.reservationTopicId,
+            payload: {
+                chat_id: enVars.telegram.chatId,
+                message_thread_id: enVars.telegram.reservationTopicId,
+                text: notificationLines.join("\n"),
+            },
+        });
         notify(notificationLines.join("\n"));
 
         return sendSuccess(res, reservation, 201);

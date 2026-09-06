@@ -59,7 +59,7 @@ app.get("/api/health", (_req, res) => {
 
 app.get("/test-telegram-message", async (_req, res) => {
     try {
-        const { botToken, chatId } = enVars.telegram;
+        const { botToken, chatId, reservationTopicId } = enVars.telegram;
 
         const response = await fetch(
             `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -70,6 +70,7 @@ app.get("/test-telegram-message", async (_req, res) => {
                 },
                 body: JSON.stringify({
                     chat_id: chatId,
+                    message_thread_id: reservationTopicId,
                     text: "Test message from Vercel",
                 }),
             }

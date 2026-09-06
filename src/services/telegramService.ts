@@ -36,6 +36,7 @@ export const sendTelegramMessage = async (text: string, topicId: number | undefi
       clearTimeout(timeout);
       lastError = error;
       console.error(`Telegram notification failed (attempt ${attempt}/${maxAttempts})`, error);
+      console.log(error);
 
       if (attempt < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
