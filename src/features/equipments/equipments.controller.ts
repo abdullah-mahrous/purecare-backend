@@ -5,6 +5,7 @@ import { deleteMedia, publicIdFromUrl, uploadImage } from "../../services/cloudi
 import { sendSuccess } from "../../utilities/response";
 
 const getId = (req: Request) => req.params.id as string;
+
 export const listEquipment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { page, limit, search, category, minPrice, maxPrice } = req.query as unknown as { page: number; limit: number; search?: string; category?: string; minPrice?: number; maxPrice?: number };
@@ -20,6 +21,12 @@ export const listEquipment = async (req: Request, res: Response, next: NextFunct
     return sendSuccess(res, { items, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
   } catch (error) { return next(error); }
 };
+
+export const getEquipment = async (req: Request, res: Response, next: NextFunction) => {
+  try { return sendSuccess(res, await prisma.equipment.findUniqueOrThrow({ where: { id: getId(req) } })); }
+  catch (error) { return next(error); }
+};
+
 export const createEquipment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) return next(new appError("An equipment image is required", 400));
@@ -28,6 +35,7 @@ export const createEquipment = async (req: Request, res: Response, next: NextFun
     catch (error) { await deleteMedia(uploaded.public_id).catch((cleanupError) => console.error("Equipment upload cleanup failed", cleanupError)); throw error; }
   } catch (error) { return next(error); }
 };
+
 export const updateEquipment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await prisma.equipment.findUniqueOrThrow({ where: { id: getId(req) } });
@@ -40,6 +48,7 @@ export const updateEquipment = async (req: Request, res: Response, next: NextFun
     } catch (error) { if (uploaded) await deleteMedia(uploaded.public_id).catch((cleanupError) => console.error("Equipment upload cleanup failed", cleanupError)); throw error; }
   } catch (error) { return next(error); }
 };
+
 export const deleteEquipment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const equipment = await prisma.equipment.delete({ where: { id: getId(req) } });
