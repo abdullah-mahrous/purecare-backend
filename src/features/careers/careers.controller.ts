@@ -6,8 +6,6 @@ import { sendTelegramMessage } from "../../services/telegramService";
 import { sendSuccess } from "../../utilities/response";
 import { appError } from "../../utilities/appError";
 
-const notify = (message: string) => sendTelegramMessage(message, enVars.telegram.careerTopicId).catch((error: unknown) => console.error("Telegram notification failed", error));
-
 export const createCareer = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
@@ -46,7 +44,12 @@ export const createCareer = async (req: Request, res: Response, next: NextFuncti
       ...(career.workPlaces && career.workPlaces.trim() ? [`Work places: ${career.workPlaces.trim()}`] : []),
     ];
 
-    notify(notificationLines.join("\n"));
+    try {
+      await sendTelegramMessage(notificationLines.join("\n"), enVars.telegram.careerTopicId);
+    }
+    catch (error) {
+      console.error("Failed to notify about new career application", error);
+    }
     return sendSuccess(res, career, 201);
   } catch (error) { return next(error); }
 };
