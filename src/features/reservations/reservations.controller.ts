@@ -6,8 +6,6 @@ import { sendTelegramMessage } from "../../services/telegramService";
 import { appError } from "../../utilities/appError";
 import { sendSuccess } from "../../utilities/response";
 
-const notify = (message: string) => sendTelegramMessage(message, enVars.telegram.reservationTopicId).catch((error: unknown) => console.error("Telegram notification failed", error));
-
 export const createReservation = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceIds = [], ...reservationData } = req.body as { serviceIds?: string[] | null } & Record<string, unknown>;
@@ -46,16 +44,12 @@ export const createReservation = async (req: Request, res: Response, next: NextF
             ...(reservation.notes && reservation.notes.trim() ? [`Notes: ${reservation.notes.trim()}`] : []),
         ];
 
-        console.log("Telegram request:", {
-            envchatId: enVars.telegram.chatId,
-            topicId: enVars.telegram.reservationTopicId,
-            payload: {
-                chat_id: enVars.telegram.chatId,
-                message_thread_id: enVars.telegram.reservationTopicId,
-                text: notificationLines.join("\n"),
-            },
-        });
-        notify(notificationLines.join("\n"));
+        try {
+            await sendTelegramMessage(notificationLines.join("\n"), enVars.telegram.reservationTopicId);
+        }
+        catch (error) {
+            console.error("Failed to notify about new reservation", error);
+        }
 
         return sendSuccess(res, reservation, 201);
     } catch (error) {
