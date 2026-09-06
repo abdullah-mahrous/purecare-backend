@@ -1,7 +1,7 @@
 import enVars from "../config/environment";
 
 const retryDelayMs = 1000;
-const maxAttempts = 3;
+const maxAttempts = 1;
 
 export const sendTelegramMessage = async (text: string, topicId: number | undefined) => {
   const { botToken, chatId } = enVars.telegram;
