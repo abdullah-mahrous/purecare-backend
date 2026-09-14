@@ -15,7 +15,7 @@ export const createCareer = async (req: Request, res: Response, next: NextFuncti
     let career;
     try {
       for (const [field, fieldFiles] of Object.entries(files ?? {})) {
-        for (const file of fieldFiles) uploadedFiles.push({ field, result: await uploadImage(file.buffer, "purecare/careers") });
+        for (const file of fieldFiles) uploadedFiles.push({ field, result: await uploadImage(file.buffer, "purecare/careers", file.originalname, file.mimetype) });
       }
       const urls = (field: string) => uploadedFiles.filter((uploaded) => uploaded.field === field).map((uploaded) => uploaded.result.secure_url);
       const nationalIdUrls = urls("nationalId");

@@ -30,7 +30,7 @@ export const getEquipment = async (req: Request, res: Response, next: NextFuncti
 export const createEquipment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) return next(new appError("An equipment image is required", 400));
-    const uploaded = await uploadImage(req.file.buffer, "purecare/equipment");
+    const uploaded = await uploadImage(req.file.buffer, "purecare/equipment", req.file.originalname, req.file.mimetype);
     try { return sendSuccess(res, await prisma.equipment.create({ data: { ...req.body, imgUrl: uploaded.secure_url } }), 201); }
     catch (error) { await deleteMedia(uploaded.public_id).catch((cleanupError) => console.error("Equipment upload cleanup failed", cleanupError)); throw error; }
   } catch (error) { return next(error); }
@@ -39,7 +39,7 @@ export const createEquipment = async (req: Request, res: Response, next: NextFun
 export const updateEquipment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await prisma.equipment.findUniqueOrThrow({ where: { id: getId(req) } });
-    const uploaded = req.file ? await uploadImage(req.file.buffer, "purecare/equipment") : undefined;
+    const uploaded = req.file ? await uploadImage(req.file.buffer, "purecare/equipment", req.file.originalname, req.file.mimetype) : undefined;
     try {
       const updated = await prisma.equipment.update({ where: { id: existing.id }, data: { ...req.body, ...(uploaded ? { imgUrl: uploaded.secure_url } : {}) } });
       const oldPublicId = publicIdFromUrl(existing.imgUrl);

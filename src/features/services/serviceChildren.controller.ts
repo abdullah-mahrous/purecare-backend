@@ -15,7 +15,7 @@ const deleteIcon = async (iconUrl: string | null | undefined, message: string) =
 export const createIncludedService = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) return next(new appError("An included service icon is required", 400));
-    const uploaded = await uploadImage(req.file.buffer, "purecare/services/included");
+    const uploaded = await uploadImage(req.file.buffer, "purecare/services/included", req.file.originalname, req.file.mimetype);
     const item = await prisma.includedService.create({ data: { ...req.body, iconUrl: uploaded.secure_url, serviceId: getServiceId(req) } });
     return sendSuccess(res, item, 201);
   } catch (error) { return next(error); }
@@ -24,7 +24,7 @@ export const createIncludedService = async (req: Request, res: Response, next: N
 export const updateIncludedService = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await prisma.includedService.findFirstOrThrow({ where: { id: getChildId(req), serviceId: getServiceId(req) } });
-    const uploaded = req.file ? await uploadImage(req.file.buffer, "purecare/services/included") : undefined;
+    const uploaded = req.file ? await uploadImage(req.file.buffer, "purecare/services/included", req.file.originalname, req.file.mimetype) : undefined;
     const updated = await prisma.includedService.update({ where: { id: existing.id }, data: { ...req.body, ...(uploaded ? { iconUrl: uploaded.secure_url } : {}) } });
     if (uploaded) await deleteIcon(existing.iconUrl, "Included service media cleanup failed");
     return sendSuccess(res, updated);
@@ -43,7 +43,7 @@ export const deleteIncludedService = async (req: Request, res: Response, next: N
 export const createTargetedCustomer = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) return next(new appError("A targeted customer icon is required", 400));
-    const uploaded = await uploadImage(req.file.buffer, "purecare/services/targeted");
+    const uploaded = await uploadImage(req.file.buffer, "purecare/services/targeted", req.file.originalname, req.file.mimetype);
     const item = await prisma.targetedCustomer.create({ data: { ...req.body, iconUrl: uploaded.secure_url, serviceId: getServiceId(req) } });
     return sendSuccess(res, item, 201);
   } catch (error) { return next(error); }
@@ -52,7 +52,7 @@ export const createTargetedCustomer = async (req: Request, res: Response, next: 
 export const updateTargetedCustomer = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await prisma.targetedCustomer.findFirstOrThrow({ where: { id: getChildId(req), serviceId: getServiceId(req) } });
-    const uploaded = req.file ? await uploadImage(req.file.buffer, "purecare/services/targeted") : undefined;
+    const uploaded = req.file ? await uploadImage(req.file.buffer, "purecare/services/targeted", req.file.originalname, req.file.mimetype) : undefined;
     const updated = await prisma.targetedCustomer.update({ where: { id: existing.id }, data: { ...req.body, ...(uploaded ? { iconUrl: uploaded.secure_url } : {}) } });
     if (uploaded) await deleteIcon(existing.iconUrl, "Targeted customer media cleanup failed");
     return sendSuccess(res, updated);

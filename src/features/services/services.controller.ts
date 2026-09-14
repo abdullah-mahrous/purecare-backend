@@ -23,7 +23,7 @@ const deleteCloudinaryMedia = (urls: Array<string | null | undefined>, message: 
 export const createService = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) return next(new appError("A service image is required", 400));
-    const uploaded = await uploadImage(req.file.buffer, "purecare/services");
+    const uploaded = await uploadImage(req.file.buffer, "purecare/services", req.file.originalname, req.file.mimetype);
     const created = await prisma.$transaction((transaction: Prisma.TransactionClient) => transaction.service.create({
       data: { ...req.body, imgUrl: uploaded.secure_url },
       include,
@@ -36,7 +36,7 @@ export const updateService = async (req: Request, res: Response, next: NextFunct
   try {
     const id = getId(req);
     const existing = await prisma.service.findUniqueOrThrow({ where: { id } });
-    const uploaded = req.file ? await uploadImage(req.file.buffer, "purecare/services") : undefined;
+    const uploaded = req.file ? await uploadImage(req.file.buffer, "purecare/services", req.file.originalname, req.file.mimetype) : undefined;
     const updated = await prisma.service.update({ where: { id }, data: { ...req.body, ...(uploaded ? { imgUrl: uploaded.secure_url } : {}) }, include });
     if (uploaded) await deleteCloudinaryMedia([existing.imgUrl], "Service media cleanup failed");
     return sendSuccess(res, updated);
