@@ -47,7 +47,6 @@ model Service {
   faqs           Faq[]
   included       IncludedService[]
   targeted       TargetedCustomer[]
-  reservations   ReservationService[]
 
   @@map("services")
 }
@@ -129,13 +128,11 @@ model Reservation {
 }
 
 model ReservationService {
+  id            String      @id @default(cuid())
   reservationId String
-  serviceId     String
+  serviceNameEn String
   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  service       Service     @relation(fields: [serviceId], references: [id], onDelete: Restrict)
 
-  @@id([reservationId, serviceId])
-  @@index([serviceId])
   @@map("reservation_services")
 }
 

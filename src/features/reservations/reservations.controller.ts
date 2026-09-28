@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import type { Prisma, Service } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../config/database";
 import enVars from "../../config/environment";
 import { sendTelegramMessage } from "../../services/telegramService";
@@ -10,14 +10,13 @@ export const createReservation = async (req: Request, res: Response, next: NextF
     try {
         const { serviceIds = [], ...reservationData } = req.body as { serviceIds?: string[] | null } & Record<string, unknown>;
         const requestedServiceIds = serviceIds ?? [];
+        const services = await prisma.service.findMany({
+            where: { id: { in: requestedServiceIds } },
+            select: { id: true, nameEn: true },
+        });
 
         if (requestedServiceIds.length > 0) {
-            const services = await prisma.service.findMany({
-                where: { id: { in: requestedServiceIds } },
-                select: { id: true },
-            });
-
-            const existingServiceIds = new Set(services.map((service: Pick<Service, "id">) => service.id));
+            const existingServiceIds = new Set(services.map((service) => service.id));
             const invalidServiceIds = requestedServiceIds.filter((serviceId) => !existingServiceIds.has(serviceId));
 
             if (invalidServiceIds.length > 0)
@@ -27,9 +26,19 @@ export const createReservation = async (req: Request, res: Response, next: NextF
         const reservation = await prisma.$transaction(async (transaction: Prisma.TransactionClient) => {
             const created = await transaction.reservation.create({ data: reservationData as never });
 
-            await transaction.reservationService.createMany({ data: requestedServiceIds.map((serviceId) => ({ reservationId: created.id, serviceId })) });
+            const servicesById = new Map(services.map((service) => [service.id, service]));
+            await transaction.reservationService.createMany({
+                data: requestedServiceIds.map((serviceId) => {
+                    const service = servicesById.get(serviceId);
+                    if (!service) throw new appError(`Service ${serviceId} was not found`, 400);
+                    return {
+                        reservationId: created.id,
+                        serviceNameEn: service.nameEn,
+                    };
+                }),
+            });
 
-            return transaction.reservation.findUniqueOrThrow({ where: { id: created.id }, include: { services: { include: { service: true } } } });
+            return transaction.reservation.findUniqueOrThrow({ where: { id: created.id }, include: { services: true } });
         });
 
         const notificationLines = [
@@ -39,7 +48,7 @@ export const createReservation = async (req: Request, res: Response, next: NextF
             ...(reservation.age !== null && reservation.age !== undefined && reservation.age >= 0 ? [`Age: ${reservation.age}`] : []),
             `Date: ${reservation.desiredDate.toISOString()}`,
             `Address: ${reservation.address}`,
-            `Services: ${reservation.services.map(({ service }: { service: Service }) => `${service.nameEn} (${service.nameAr})`).join(", ")}`,
+            `Services: ${reservation.services.map(({ serviceNameEn }) => serviceNameEn).join(", ")}`,
             ...(reservation.healthIssue && reservation.healthIssue.trim() ? [`Health issue: ${reservation.healthIssue.trim()}`] : []),
             ...(reservation.notes && reservation.notes.trim() ? [`Notes: ${reservation.notes.trim()}`] : []),
         ];
@@ -59,7 +68,7 @@ export const createReservation = async (req: Request, res: Response, next: NextF
 
 export const listReservations = async (_req: Request, res: Response, next: NextFunction) => {
     try { 
-        return sendSuccess(res, await prisma.reservation.findMany({ include: { services: { include: { service: true } } }, orderBy: { createdAt: "desc" } })); 
+        return sendSuccess(res, await prisma.reservation.findMany({ include: { services: true }, orderBy: { createdAt: "desc" } })); 
     }
     catch (error) { 
         return next(error); 

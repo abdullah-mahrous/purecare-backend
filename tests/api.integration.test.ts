@@ -93,6 +93,6 @@ databaseTests("supports admin login, protected content, and equipment filters", 
     expect(created.status).toBe(201);
     reservationId = created.body.data.id;
     expect(created.body.data.services).toHaveLength(2);
-    expect(created.body.data.services.map((entry: { service: { id: string } }) => entry.service.id)).toEqual(expect.arrayContaining(serviceIds));
+    expect(created.body.data.services.map((entry: { serviceNameEn: string }) => entry.serviceNameEn)).toEqual(expect.arrayContaining(["Integration Nursing", "Integration Physiotherapy"]));
   });
 });
